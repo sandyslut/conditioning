@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sissy Academy Conditioning Helper</title>
+    <meta charset="utf-8">
+    <meta name=viewport content="width=device-width, initial-scale=1">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/blueimp-gallery/2.29.0/css/blueimp-gallery.min.css">
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/blueimp-gallery/2.29.0/js/blueimp-gallery.min.js"></script>
+
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.0.7/howler.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.3.7/css/bootstrap.min.css">
+
+    <style type="text/css">
+      body{
+        /*bright*/
+        /*color: #f371ff;
+        background-color: #fbfbfb;*/
+
+        /*dark*/
+        color: #f8adff;
+        background-color: #000000;
+
+        font-size: 16px;
+      }
+      h1{
+        font-weight: bold;
+      }
+      ol{
+        display: inline-block;
+      }
+      #metronome-tick{
+        display: none;
+      }
+      #login-logout{
+        margin-top: 2em;
+      }
+      #settings{
+        margin-top: 2em;
+        padding-bottom: 2em;
+      }
+      span.glyphicon.form-control-feedback{
+        right: 30px !important;
+      }
+      .btn-primary,
+      .btn-primary:focus,
+      .btn-primary:active{
+        /*bright*/
+        /*background-color: #f587ff !important;
+        border-color: #ea00ff !important;*/
+
+        /*dark*/
+        background-color: #f15aff !important;
+        border-color: #ffffff !important;
+      }
+      .btn-primary:hover{
+        background-color: #d200e6 !important;
+        border-color: #750080 !important;
+      }
+      #blueimp-gallery.blueimp-gallery > .play-pause{
+        width: 40px;
+        height: 40px;
+        background-size: 80px 40px;
+      }
+      #blueimp-gallery.blueimp-gallery-playing > .play-pause{
+          background-position: -40px 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid text-center">
+      <h1>Sissy Academy Conditioning Helper</h1>
+      <p>This tool will help you with your conditioning.</p>
+      <ol class="text-left">
+        <li>Login with your Google Drive account and select a folder with images.</li>
+        <li>Set the beats per minute and after how many beats the next image should appear.</li>
+        <li>Press start and fully concentrate on your mantra!</li>
+      </ol>
+      <p><small><b>Hint:</b> You can use the space bar to pause.</small></p>
+      <p><small>You need to be logged in with your Google Account, otherwise the images will not load.</small></p>
+      <div class="row">
+        <div id="login-logout" class="col-xs-12">
+          <button id="authorize-button" class="btn btn-primary hidden">Login with Google Drive</button>
+          <button id="signout-button" class="btn btn-primary hidden">Sign Out</button>
+        </div>
+      </div>
+
+      <div class="row">
+        <div id="settings" class="hidden col-xs-12 col-sm-6 col-sm-offset-3 col-md-4 col-md-offset-4">
+          <form class="form-horizontal" autocomplete="off">
+            <div id="folder-group" class="form-group has-feedback">
+              <label class="control-label col-xs-4" for="folder-select">Folder:</label>
+              <div class="col-xs-8">
+                <select class="form-control" id="folder-select">
+                  <option>Select a Google Drive folder...</option>
+                </select>
+                <small id="folder-help" class="form-text text-muted">
+                  Select a Google Drive folder...
+                </small>
+                <span class="hidden glyphicon form-control-feedback"></span>
+              </div>
+              <div class="form-check col-xs-8 col-xs-offset-4 text-left">
+                <input id="shuffle-checkbox" type="checkbox" class="form-check-input">
+                <label class="form-check-label" for="shuffle-checkbox">Shuffle images</label>
+              </div>
+            </div>
+            <div id="beats-group" class="form-group has-feedback">
+              <label class="control-label col-xs-4" or="beats-input">BPM:</label>
+              <div class="col-xs-8">
+                <input class="form-control" id="beats-input" type="number">
+                <small id="next-help" class="form-text text-muted">
+                  Set to 0 to just show the gallery.
+                </small>
+                <span class="hidden glyphicon form-control-feedback"></span>
+              </div>
+            </div>
+            <div id="next-group" class="form-group has-feedback">
+              <label class="control-label col-xs-4" for="next-input">Next image:</label>
+              <div class="col-xs-8">
+                <input class="form-control" id="next-input" type="number">
+                <small id="next-help" class="form-text text-muted">
+                  Set to 0 to disable the automatic slideshow.
+                </small>
+                <span class="hidden glyphicon form-control-feedback"></span>
+              </div>
+            </div>
+          </form>
+          <button id="start-button" class="btn btn-primary">Start</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="blueimp-gallery" class="blueimp-gallery blueimp-gallery-controls">
+      <div class="slides"></div>
+      <a class="prev">‹</a>
+      <a class="next">›</a>
+      <a class="close">×</a>
+      <a id="play-pause" class="play-pause"></a>
+      <ol class="indicator"></ol>
+    </div>
+
+    <script type="text/javascript">
+      // Client ID and API key from the Developer Console
+      var CLIENT_ID = "180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com";
+
+      // Array of API discovery doc URLs for APIs
+      var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+
+      // Authorization scopes required by the API; multiple scopes can be
+      // included, separated by spaces.
+      var SCOPES = "https://www.googleapis.com/auth/drive.metadata.readonly";
+
+      // Namespace
+      var sissy = {};
+
+      // Load some nodes
+      sissy.authorizeButton = document.getElementById("authorize-button");
+      sissy.signoutButton = document.getElementById("signout-button");
+      sissy.settings = document.getElementById("settings");
+      sissy.folderSelect = document.getElementById("folder-select");
+      sissy.shuffleCheckbox = document.getElementById("shuffle-checkbox");
+      sissy.beatsInput = document.getElementById("beats-input");
+      sissy.nextInput = document.getElementById("next-input");
+      sissy.startButton = document.getElementById("start-button");
+      sissy.tickSound = new Howl({src: ["tick.mp3"]});
+
+      /**
+       *  On load, called to load the auth2 library and API client library.
+       */
+      function handleClientLoad(){
+        gapi.load("client:auth2", initClient);
+      }
+
+      /**
+       *  Initializes the API client library and sets up sign-in state
+       *  listeners.
+       */
+      function initClient(){
+        gapi.client.init({
+          clientId: CLIENT_ID,
+          discoveryDocs: DISCOVERY_DOCS,
+          scope: SCOPES
+        }).then(function (){
+          // Listen for sign-in state changes.
+          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+          // Handle the initial sign-in state.
+          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+          sissy.authorizeButton.onclick = handleAuthClick;
+          sissy.signoutButton.onclick = handleSignoutClick;
+        });
+      }
+
+      /**
+       *  Called when the signed in status changes, to update the UI
+       *  appropriately. After a sign-in, the API is called.
+       */
+      function updateSigninStatus(isSignedIn) {
+        if(isSignedIn){
+          sissy.authorizeButton.classList.add("hidden");
+          sissy.signoutButton.classList.remove("hidden");
+          sissy.settings.classList.remove("hidden");
+
+          // load folders to folder-select
+          listFolders();
+        }else{
+          sissy.authorizeButton.classList.remove("hidden");
+          sissy.signoutButton.classList.add("hidden");
+          sissy.settings.classList.add("hidden");
+        }
+      }
+
+      /**
+       *  Sign in the user upon button click.
+       */
+      function handleAuthClick(event){
+        gapi.auth2.getAuthInstance().signIn();
+      }
+
+      /**
+       *  Sign out the user upon button click.
+       */
+      function handleSignoutClick(event){
+        gapi.auth2.getAuthInstance().signOut();
+      }
+
+      /**
+      * List all Google Drive folders in folder-select
+      */
+      function listFolders(){
+        gapi.client.drive.files.list({
+          "q": "mimeType contains 'application/vnd.google-apps.folder' and trashed=false",
+          "fields": "files(id, name)"
+        }).then(function(response){
+          if(!response.error){
+            var folders = response.result.files;
+            var default_folder;
+
+            if(folders && folders.length > 0){
+              for(var i=0; i < folders.length; i++){
+                
+                var option = document.createElement("option");
+                option.value = folders[i].id;
+                option.innerHTML = folders[i].name;
+                sissy.folderSelect.appendChild(option);
+
+                if(folders[i].name.toLowerCase() == "orgasm diet"){
+                  default_folder = folders[i];
+                }
+              }
+
+              if(default_folder){
+                sissy.folderSelect.value = default_folder.id;
+                listFiles(default_folder.id);
+              }
+
+              sissy.folderSelect.onchange = function(){
+                listFiles(sissy.folderSelect.value);
+              }
+            }else{
+              feedbackError(document.getElementById("folder-group"));
+              document.getElementById("folder-help").innerHTML = "Found no folders.";
+              var option = document.createElement("option");
+              option.innerHTML = "Found no folders";
+              sissy.folderSelect.appendChild(option);
+            }
+          }else{
+            feedbackError(document.getElementById("folder-group"));
+            document.getElementById("folder-help").innerHTML = "Failed to fetch folders. Error: " + response.error;
+            var option = document.createElement("option");
+            option.innerHTML = "Failed to fetch folders";
+            sissy.folderSelect.appendChild(option);
+            console.error(response.error);
+          }
+        }, function(){
+            feedbackError(document.getElementById("folder-group"));
+            document.getElementById("folder-help").innerHTML = "Failed to fetch folders.";
+        });
+      }
+
+      /**
+      * Load all files of a google drive folder and init blueimp gallery
+      */
+      function listFiles(folderId){
+        sissy.urls = [];
+
+        gapi.client.drive.files.list({
+          'q': "trashed=false and '" + folderId + "' in parents",
+          'fields': "files(id, name)"
+        }).then(function(response){
+          if(!response.error){
+            var files = response.result.files;
+            if(files && files.length > 0){
+
+              for(var i=0; i < files.length; i++){
+                sissy.urls.push("https://lh3.google.com/d/" + files[i].id);
+              }
+
+              document.getElementById("folder-help").innerHTML = "Loaded " + sissy.urls.length + " images.";
+              
+              if(sissy.urls.length > 0){
+                feedbackOK(document.getElementById("folder-group"));
+              }
+            }else{
+              feedbackError(document.getElementById("folder-group"));
+              document.getElementById("folder-help").innerHTML = "No files in folder.";
+            }
+          }else{
+            feedbackError(document.getElementById("folder-group"));
+            document.getElementById("folder-help").innerHTML = "Failed to fetch files. Error: " + response.error;
+            console.error(response.error);
+          }
+        }, function(){
+            feedbackError(document.getElementById("folder-group"));
+            document.getElementById("folder-help").innerHTML = "Failed to fetch files.";
+        });
+      }
+
+      function clearFeedback(formGroup){
+        formGroup.classList.remove("has-error");
+        formGroup.classList.remove("has-success");
+
+        var icon = formGroup.getElementsByTagName("span")[0];
+        icon.classList.remove("glyphicon-remove");
+        icon.classList.remove("glyphicon-ok");
+        icon.classList.add("hidden");
+      }
+
+      function feedbackOK(formGroup){
+        formGroup.classList.remove("has-error");
+        formGroup.classList.add("has-success");
+
+        var icon = formGroup.getElementsByTagName("span")[0];
+        icon.classList.remove("glyphicon-remove");
+        icon.classList.add("glyphicon-ok");
+        icon.classList.remove("hidden");
+      }
+
+      function feedbackError(formGroup){
+        formGroup.classList.remove("has-success");
+        formGroup.classList.add("has-error");
+
+        var icon = formGroup.getElementsByTagName("span")[0];
+        icon.classList.remove("glyphicon-ok");
+        icon.classList.add("glyphicon-remove");
+        icon.classList.remove("hidden");
+      }
+
+      function shuffle(array) {
+          var j, x, i;
+          for (i = array.length - 1; i > 0; i--) {
+              j = Math.floor(Math.random() * (i + 1));
+              x = array[i];
+              array[i] = array[j];
+              array[j] = x;
+          }
+      }
+
+      function tick(){
+        sissy.playing = true;
+
+        if(sissy.beats > 0){
+          sissy.tickSound.play();
+        }
+
+        if(sissy.nextCount > 0 && sissy.tickCount >= sissy.nextCount){
+          sissy.tickCount = 0;
+          sissy.gallery.next();
+        }
+        sissy.tickCount += 1;
+      }
+
+      function toggleSlideShow(event){
+        //always pasue blueimp-gallery intern slideshow
+        sissy.gallery.pause();
+
+        if(sissy.playing){
+          stopMetronome();
+          document.getElementById("blueimp-gallery").classList.remove("blueimp-gallery-playing");
+          sissy.playing = false;
+        }else{
+          start();
+        }
+
+        // prevent the gallery event listeners from being called
+        event.stopPropagation();
+      }
+
+      function start(event){
+        if(!sissy.urls || sissy.urls.length <= 0){
+          listFiles(sissy.folderSelect.value);
+
+          // if still no urls do not start
+          if(!sissy.urls || sissy.urls.length <= 0){
+             return
+          }
+        }
+        if(!sissy.beats){
+          feedbackError(document.getElementById("beats-group"));
+          return
+        }
+        if(sissy.beats != 0 && !sissy.nextCount){
+          feedbackError(document.getElementById("next-group"));
+          return
+        }
+        if(!sissy.tickCount){
+          sissy.tickCount = 1;
+        }
+
+        if(!sissy.gallery){
+          var urls = sissy.urls.slice();
+          if(sissy.shuffleCheckbox.checked){
+            shuffle(urls);
+          }
+
+          sissy.gallery = blueimp.Gallery(urls, {onclose:stop, preloadRange: 4});
+
+          if(sissy.beats > 0){
+            // custom event listeners have to be added after gallery ones, so they will be called first
+            document.getElementById("play-pause").addEventListener("click", toggleSlideShow);
+            document.body.addEventListener("keydown", function(event){
+              var key = event.which || event.keyCode;
+              if(key == 32){ // Space
+                toggleSlideShow(event);
+              }
+            });
+          }
+        }
+        
+        if(sissy.beats > 0){
+          sissy.metronome = setInterval(tick, 1000/(sissy.beats/60));
+          document.getElementById("blueimp-gallery").classList.add("blueimp-gallery-playing");
+          sissy.playing = true;
+        }
+      }
+
+      function stopMetronome(){
+        if(sissy.metronome){
+          clearInterval(sissy.metronome);
+        }
+      }
+
+      function stop(){
+        stopMetronome();
+        sissy.tickCount = null;
+        sissy.gallery = null;
+      }
+
+      sissy.startButton.onclick = start;
+      sissy.beatsInput.onchange = function(event){
+        sissy.beats = sissy.beatsInput.value;
+        if(sissy.beats >= 0){
+          feedbackOK(document.getElementById("beats-group"));
+        }else{
+          sissy.beatsInput.value = "";
+          sissy.beats = undefined;
+          feedbackError(document.getElementById("beats-group"));
+        }
+      };
+      sissy.nextInput.onchange = function(event){
+        sissy.nextCount = sissy.nextInput.value;
+        if(sissy.nextCount >= 0){
+          feedbackOK(document.getElementById("next-group"));
+        }else{
+          sissy.nextInput.value = "";
+          sissy.nextCount = undefined;
+          feedbackError(document.getElementById("next-group"));
+        }
+      };
+    </script>
+
+    <script async defer src="https://apis.google.com/js/api.js"
+      onload="this.onload=function(){};handleClientLoad()"
+      onreadystatechange="if (this.readyState === 'complete') this.onload()">
+    </script>
+  </body>
+</html>
