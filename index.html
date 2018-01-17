@@ -14,11 +14,6 @@
 
     <style type="text/css">
       body{
-        /*bright*/
-        /*color: #f371ff;
-        background-color: #fbfbfb;*/
-
-        /*dark*/
         color: #f8adff;
         background-color: #000000;
 
@@ -27,7 +22,8 @@
       h1{
         font-weight: bold;
       }
-      ol{
+      ol,
+      ul{
         display: inline-block;
       }
       #metronome-tick{
@@ -46,17 +42,16 @@
       .btn-primary,
       .btn-primary:focus,
       .btn-primary:active{
-        /*bright*/
-        /*background-color: #f587ff !important;
-        border-color: #ea00ff !important;*/
-
-        /*dark*/
         background-color: #f15aff !important;
         border-color: #ffffff !important;
       }
       .btn-primary:hover{
         background-color: #d200e6 !important;
         border-color: #750080 !important;
+      }
+      a,
+      a:hover{
+        color: #d200e6 !important;
       }
       #blueimp-gallery.blueimp-gallery > .play-pause{
         width: 40px;
@@ -79,6 +74,20 @@
       </ol>
       <p><small><b>Hint:</b> You can use the space bar to pause.</small></p>
       <p><small>You need to be logged in with your Google Account, otherwise the images will not load.</small></p>
+      <a id="options-toggle" data-toggle="collapse" role="button" aria-expanded="false" aria-controls="advancedOptions" onclick="showOptions();">
+        <small>Advanced Options</small>
+      </a>
+      <div class="collapse" id="advancedOptions" role="tabpanel">
+        <p>You can use the following url parameters to automatically set the settings:<p>
+        <ul class="text-left">
+          <li><b>folder</b> - Folder name that should be selected</li>
+          <li><b>shuffle</b> - Set to 1 to activate image shuffling
+          <li><b>bpm</b> - Beats per minute</li>
+          <li><b>next</b> - After how many beats the next image appears</li>
+          <li><b>autoplay</b> - After how many seconds the slideshow automatically starts<br><small>On mobile devices there will probably be no sound, because it requires a user interaction.</small></li>
+        </ul>
+        <p>For example like this: <a href="/?bpm=100&next=5&shuffle=1">/?bpm=100&amp;next=5&amp;shuffle=1</a></p>
+      </div>
       <div class="row">
         <div id="login-logout" class="col-xs-12">
           <button id="authorize-button" class="btn btn-primary hidden">Login with Google Drive</button>
@@ -153,6 +162,26 @@
 
       // Namespace
       var sissy = {};
+
+      function escapeHtml(str) {
+        var div = document.createElement("div");
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+      };
+
+      function parseArgs() {
+        var args = [];
+        if (window.location.search != "") {
+          var tempArray = window.location.search.substring(1).split("&");
+          for (var i = 0; i < tempArray.length; i++) {
+            var temp = tempArray[i].split("=");
+            args[escapeHtml(unescape(temp[0]))] = escapeHtml(unescape(temp[1]));
+          }
+        }
+        return args;
+      };
+      // load args
+      sissy.args = parseArgs();
 
       // Load some nodes
       sissy.authorizeButton = document.getElementById("authorize-button");
@@ -236,6 +265,10 @@
           if(!response.error){
             var folders = response.result.files;
             var default_folder;
+            var default_folder_name = "orgasm diet";
+            if(sissy.args["folder"]){
+              default_folder_name = sissy.args["folder"];
+            }
 
             if(folders && folders.length > 0){
               for(var i=0; i < folders.length; i++){
@@ -245,7 +278,8 @@
                 option.innerHTML = folders[i].name;
                 sissy.folderSelect.appendChild(option);
 
-                if(folders[i].name.toLowerCase() == "orgasm diet"){
+
+                if(folders[i].name.toLowerCase() == default_folder_name.toLowerCase()){
                   default_folder = folders[i];
                 }
               }
@@ -302,6 +336,12 @@
               if(sissy.urls.length > 0){
                 feedbackOK(document.getElementById("folder-group"));
               }
+
+              // start autoplay timeout after successful image loading
+              var args_autoplay = parseInt(sissy.args["autoplay"]);
+              if(args_autoplay >= 0){
+                setTimeout(start, args_autoplay*1000);
+              }
             }else{
               feedbackError(document.getElementById("folder-group"));
               document.getElementById("folder-help").innerHTML = "No files in folder.";
@@ -315,6 +355,16 @@
             feedbackError(document.getElementById("folder-group"));
             document.getElementById("folder-help").innerHTML = "Failed to fetch files.";
         });
+      }
+
+      function showOptions(){
+        document.getElementById("advancedOptions").classList.add("show");
+        document.getElementById("options-toggle").onclick = hideOptions;
+      }
+
+      function hideOptions(){
+        document.getElementById("advancedOptions").classList.remove("show");
+        document.getElementById("options-toggle").onclick = showOptions;
       }
 
       function clearFeedback(formGroup){
@@ -468,6 +518,24 @@
           feedbackError(document.getElementById("next-group"));
         }
       };
+
+      // set options if args are present
+      var args_shuffle = parseInt(sissy.args["shuffle"]);
+      if(args_shuffle){
+        if(args_shuffle == 1){
+          sissy.shuffleCheckbox.checked = true;
+        }
+      }
+      var args_beats = parseInt(sissy.args["bpm"]);
+      if(args_beats){
+        sissy.beatsInput.value = args_beats;
+        sissy.beatsInput.dispatchEvent(new Event("change"));
+      }
+      var args_next = parseInt(sissy.args["next"]);
+      if(args_next){
+        sissy.nextInput.value = args_next;
+        sissy.nextInput.dispatchEvent(new Event("change"));
+      }
     </script>
 
     <script async defer src="https://apis.google.com/js/api.js"
