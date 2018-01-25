@@ -138,6 +138,16 @@
                 <span class="hidden glyphicon form-control-feedback"></span>
               </div>
             </div>
+            <div id="limit-group" class="form-group has-feedback">
+              <label class="control-label col-xs-4" for="limit-input">Limit:</label>
+              <div class="col-xs-8">
+                <input class="form-control" id="limit-input" type="number">
+                <small id="limit-help" class="form-text text-muted">
+                  Set to 0 to use all files.		
+                </small>
+                <span class="hidden glyphicon form-control-feedback"></span>
+              </div>
+            </div>
           </form>
           <button id="start-button" class="btn btn-primary">Start</button>
         </div>
@@ -195,6 +205,7 @@
       sissy.shuffleCheckbox = document.getElementById("shuffle-checkbox");
       sissy.beatsInput = document.getElementById("beats-input");
       sissy.nextInput = document.getElementById("next-input");
+      sissy.limitInput = document.getElementById("limit-input");
       sissy.startButton = document.getElementById("start-button");
       sissy.tickSound = new Howl({src: ["tick.mp3"]});
 
@@ -458,6 +469,10 @@
           feedbackError(document.getElementById("next-group"));
           return
         }
+        if (!sissy.limitCount){
+          feedbackError(document.getElementById("limit-group"));
+          return
+        }
         if(!sissy.tickCount){
           sissy.tickCount = 1;
         }
@@ -466,6 +481,10 @@
           var urls = sissy.urls.slice();
           if(sissy.shuffleCheckbox.checked){
             shuffle(urls);
+          }
+
+          if(sissy.limitCount > 0) {
+            urls = urls.slice(0,sissy.limitCount);
           }
 
           sissy.gallery = blueimp.Gallery(urls, {onclose:stop, preloadRange: 4});
@@ -520,6 +539,16 @@
           sissy.nextInput.value = "";
           sissy.nextCount = undefined;
           feedbackError(document.getElementById("next-group"));
+        }
+      };
+      sissy.limitInput.onchange = function(event){
+        sissy.limitCount = sissy.limitInput.value;
+        if(sissy.limitCount >= 0){
+          feedbackOK(document.getElementById("limit-group"));
+        }else{
+          sissy.limitInput.value = "";
+          sissy.limitCount = undefined;
+          feedbackError(document.getElementById("limit-group"));
         }
       };
 
