@@ -88,6 +88,7 @@
           <li><b>shuffle</b> - Set to 1 to activate image shuffling
           <li><b>bpm</b> - Beats per minute</li>
           <li><b>next</b> - After how many beats the next image appears</li>
+          <li><b>limit</b> - Limit the number of images</li>
           <li><b>autoplay</b> - After how many seconds the slideshow automatically starts<br><small>On mobile devices there will probably be no sound, because it requires a user interaction.</small></li>
         </ul>
         <p>For example like this: <a href="/?bpm=100&next=5&shuffle=1">/?bpm=100&amp;next=5&amp;shuffle=1</a></p>
@@ -134,6 +135,16 @@
                 <input class="form-control" id="next-input" type="number">
                 <small id="next-help" class="form-text text-muted">
                   Set to 0 to disable the automatic slideshow.
+                </small>
+                <span class="hidden glyphicon form-control-feedback"></span>
+              </div>
+            </div>
+            <div id="limit-group" class="form-group has-feedback">
+              <label class="control-label col-xs-4" for="limit-input">Limit:</label>
+              <div class="col-xs-8">
+                <input class="form-control" id="limit-input" type="number">
+                <small id="limit-help" class="form-text text-muted">
+                  Set to 0 to use all files.		
                 </small>
                 <span class="hidden glyphicon form-control-feedback"></span>
               </div>
@@ -195,6 +206,7 @@
       sissy.shuffleCheckbox = document.getElementById("shuffle-checkbox");
       sissy.beatsInput = document.getElementById("beats-input");
       sissy.nextInput = document.getElementById("next-input");
+      sissy.limitInput = document.getElementById("limit-input");
       sissy.startButton = document.getElementById("start-button");
       sissy.tickSound = new Howl({src: ["tick.mp3"]});
 
@@ -418,7 +430,7 @@
           sissy.tickSound.play();
         }
 
-        if(sissy.nextCount > 0 && sissy.tickCount >= sissy.nextCount){
+        if(sissy.nextValue > 0 && sissy.tickCount >= sissy.nextValue){
           sissy.tickCount = 0;
           sissy.gallery.next();
         }
@@ -454,8 +466,12 @@
           feedbackError(document.getElementById("beats-group"));
           return
         }
-        if(sissy.beats != 0 && !sissy.nextCount){
+        if(sissy.beats != 0 && !sissy.nextValue){
           feedbackError(document.getElementById("next-group"));
+          return
+        }
+        if (!sissy.limitValue){
+          feedbackError(document.getElementById("limit-group"));
           return
         }
         if(!sissy.tickCount){
@@ -466,6 +482,10 @@
           var urls = sissy.urls.slice();
           if(sissy.shuffleCheckbox.checked){
             shuffle(urls);
+          }
+
+          if(sissy.limitValue > 0) {
+            urls = urls.slice(0,sissy.limitValue);
           }
 
           sissy.gallery = blueimp.Gallery(urls, {onclose:stop, preloadRange: 4});
@@ -502,26 +522,38 @@
       }
 
       sissy.startButton.onclick = start;
+
       sissy.beatsInput.onchange = function(event){
         sissy.beats = sissy.beatsInput.value;
         if(sissy.beats >= 0){
           feedbackOK(document.getElementById("beats-group"));
         }else{
-          sissy.beatsInput.value = "";
           sissy.beats = undefined;
           feedbackError(document.getElementById("beats-group"));
         }
       };
       sissy.nextInput.onchange = function(event){
-        sissy.nextCount = sissy.nextInput.value;
-        if(sissy.nextCount >= 0){
+        sissy.nextValue = sissy.nextInput.value;
+        if(sissy.nextValue >= 0){
           feedbackOK(document.getElementById("next-group"));
         }else{
-          sissy.nextInput.value = "";
-          sissy.nextCount = undefined;
+          sissy.nextValue = undefined;
           feedbackError(document.getElementById("next-group"));
         }
       };
+      sissy.limitInput.onchange = function(event){
+        sissy.limitValue = sissy.limitInput.value;
+        if(sissy.limitValue >= 0){
+          feedbackOK(document.getElementById("limit-group"));
+        }else{
+          sissy.limitValue = undefined;
+          feedbackError(document.getElementById("limit-group"));
+        }
+      };
+
+      // set defaults
+      sissy.limitInput.value = 0;
+      sissy.limitInput.dispatchEvent(new Event("change"));
 
       // set options if args are present
       var args_shuffle = parseInt(sissy.args["shuffle"]);
@@ -539,6 +571,11 @@
       if(args_next){
         sissy.nextInput.value = args_next;
         sissy.nextInput.dispatchEvent(new Event("change"));
+      }
+      var args_limit = parseInt(sissy.args["limit"]);
+      if(args_limit){
+        sissy.limitInput.value = args_limit;
+        sissy.limitInput.dispatchEvent(new Event("change"));
       }
     </script>
 
