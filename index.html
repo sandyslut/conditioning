@@ -88,6 +88,7 @@
           <li><b>shuffle</b> - Set to 1 to activate image shuffling
           <li><b>bpm</b> - Beats per minute</li>
           <li><b>next</b> - After how many beats the next image appears</li>
+          <li><b>limit</b> - Limit the number of images</li>
           <li><b>autoplay</b> - After how many seconds the slideshow automatically starts<br><small>On mobile devices there will probably be no sound, because it requires a user interaction.</small></li>
         </ul>
         <p>For example like this: <a href="/?bpm=100&next=5&shuffle=1">/?bpm=100&amp;next=5&amp;shuffle=1</a></p>
@@ -429,7 +430,7 @@
           sissy.tickSound.play();
         }
 
-        if(sissy.nextCount > 0 && sissy.tickCount >= sissy.nextCount){
+        if(sissy.nextValue > 0 && sissy.tickCount >= sissy.nextValue){
           sissy.tickCount = 0;
           sissy.gallery.next();
         }
@@ -465,11 +466,11 @@
           feedbackError(document.getElementById("beats-group"));
           return
         }
-        if(sissy.beats != 0 && !sissy.nextCount){
+        if(sissy.beats != 0 && !sissy.nextValue){
           feedbackError(document.getElementById("next-group"));
           return
         }
-        if (!sissy.limitCount){
+        if (!sissy.limitValue){
           feedbackError(document.getElementById("limit-group"));
           return
         }
@@ -483,8 +484,8 @@
             shuffle(urls);
           }
 
-          if(sissy.limitCount > 0) {
-            urls = urls.slice(0,sissy.limitCount);
+          if(sissy.limitValue > 0) {
+            urls = urls.slice(0,sissy.limitValue);
           }
 
           sissy.gallery = blueimp.Gallery(urls, {onclose:stop, preloadRange: 4});
@@ -521,36 +522,38 @@
       }
 
       sissy.startButton.onclick = start;
+
       sissy.beatsInput.onchange = function(event){
         sissy.beats = sissy.beatsInput.value;
         if(sissy.beats >= 0){
           feedbackOK(document.getElementById("beats-group"));
         }else{
-          sissy.beatsInput.value = "";
           sissy.beats = undefined;
           feedbackError(document.getElementById("beats-group"));
         }
       };
       sissy.nextInput.onchange = function(event){
-        sissy.nextCount = sissy.nextInput.value;
-        if(sissy.nextCount >= 0){
+        sissy.nextValue = sissy.nextInput.value;
+        if(sissy.nextValue >= 0){
           feedbackOK(document.getElementById("next-group"));
         }else{
-          sissy.nextInput.value = "";
-          sissy.nextCount = undefined;
+          sissy.nextValue = undefined;
           feedbackError(document.getElementById("next-group"));
         }
       };
       sissy.limitInput.onchange = function(event){
-        sissy.limitCount = sissy.limitInput.value;
-        if(sissy.limitCount >= 0){
+        sissy.limitValue = sissy.limitInput.value;
+        if(sissy.limitValue >= 0){
           feedbackOK(document.getElementById("limit-group"));
         }else{
-          sissy.limitInput.value = "";
-          sissy.limitCount = undefined;
+          sissy.limitValue = undefined;
           feedbackError(document.getElementById("limit-group"));
         }
       };
+
+      // set defaults
+      sissy.limitInput.value = 0;
+      sissy.limitInput.dispatchEvent(new Event("change"));
 
       // set options if args are present
       var args_shuffle = parseInt(sissy.args["shuffle"]);
@@ -568,6 +571,11 @@
       if(args_next){
         sissy.nextInput.value = args_next;
         sissy.nextInput.dispatchEvent(new Event("change"));
+      }
+      var args_limit = parseInt(sissy.args["limit"]);
+      if(args_limit){
+        sissy.limitInput.value = args_limit;
+        sissy.limitInput.dispatchEvent(new Event("change"));
       }
     </script>
 
