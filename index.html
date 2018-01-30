@@ -337,7 +337,8 @@
 
         gapi.client.drive.files.list({
           'q': "trashed=false and '" + folderId + "' in parents",
-          'fields': "files(id, name)"
+          'fields': "files(id, name)",
+          'pageSize': 1000
         }).then(function(response){
           if(!response.error){
             var files = response.result.files;
