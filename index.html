@@ -155,6 +155,8 @@
             </div>
           </form>
           <button id="start-button" class="btn btn-primary">Start</button>
+          <br/>
+          <small id="start-help" class="form-text text-muted"></small>
         </div>
       </div>
     </div>
@@ -212,6 +214,7 @@
       sissy.nextInput = document.getElementById("next-input");
       sissy.limitInput = document.getElementById("limit-input");
       sissy.startButton = document.getElementById("start-button");
+      sissy.startHelp = document.getElementById("start-help");
       sissy.tickSound = new Howl({src: ["tick.mp3"]});
 
       /**
@@ -526,6 +529,32 @@
         sissy.gallery = null;
       }
 
+      function updateStartHelp() {
+        var imagesPerSecond = sissy.beats / sissy.nextValue / 60;
+        if (sissy.limitValue == 0) {
+          var totalSeconds = sissy.urls.length / imagesPerSecond;
+        } else {
+          var totalSeconds = sissy.limitValue / imagesPerSecond;
+        }
+        sissy.startHelp.innerHTML='Estimated training time: ' + totalSeconds.toString().toHHMMSS();
+      }
+
+      function clearStartHelp() {
+        sissy.startHelp.innerHTML='';
+      }
+
+      String.prototype.toHHMMSS = function () {
+        var sec_num = parseInt(this, 10); // don't forget the second param
+        var hours   = Math.floor(sec_num / 3600);
+        var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+        var seconds = sec_num - (hours * 3600) - (minutes * 60);
+
+        if (hours   < 10) {hours   = "0"+hours;}
+        if (minutes < 10) {minutes = "0"+minutes;}
+        if (seconds < 10) {seconds = "0"+seconds;}
+        return hours+':'+minutes+':'+seconds;
+      };
+
       sissy.startButton.onclick = start;
 
       sissy.beatsInput.onchange = function(event){
@@ -536,6 +565,12 @@
           sissy.beats = undefined;
           feedbackError(document.getElementById("beats-group"));
         }
+
+        if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+          updateStartHelp();
+        } else {
+          clearStartHelp();
+        }
       };
       sissy.nextInput.onchange = function(event){
         sissy.nextValue = sissy.nextInput.value;
@@ -545,6 +580,12 @@
           sissy.nextValue = undefined;
           feedbackError(document.getElementById("next-group"));
         }
+
+        if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+            updateStartHelp();
+        } else {
+            clearStartHelp();
+        }
       };
       sissy.limitInput.onchange = function(event){
         sissy.limitValue = sissy.limitInput.value;
@@ -553,6 +594,12 @@
         }else{
           sissy.limitValue = undefined;
           feedbackError(document.getElementById("limit-group"));
+        }
+
+        if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+            updateStartHelp();
+        } else {
+            clearStartHelp();
         }
       };
 
