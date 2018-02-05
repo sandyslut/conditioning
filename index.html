@@ -443,6 +443,10 @@
           sissy.gallery.next();
         }
         sissy.tickCount += 1;
+        sissy.totalTickCount += 1;
+
+        var diff = (new Date().getTime() - sissy.startTime) - (sissy.totalTickCount * 1000/(sissy.beats/60));
+        sissy.metronome = window.setTimeout(tick, 1000 / (sissy.beats / 60) - diff);
       }
 
       function toggleSlideShow(event){
@@ -485,6 +489,7 @@
         if(!sissy.tickCount){
           sissy.tickCount = 1;
         }
+        sissy.totalTickCount = 0;
 
         if(!sissy.gallery){
           var urls = sissy.urls.slice();
@@ -510,8 +515,9 @@
           }
         }
         
-        if(sissy.beats > 0){
-          sissy.metronome = setInterval(tick, 1000/(sissy.beats/60));
+        if(sissy.beats > 0) {
+          sissy.startTime = new Date().getTime();
+          sissy.metronome = setTimeout(tick, 1000/(sissy.beats/60));
           document.getElementById("blueimp-gallery").classList.add("blueimp-gallery-playing");
           sissy.playing = true;
         }
@@ -519,13 +525,15 @@
 
       function stopMetronome(){
         if(sissy.metronome){
-          clearInterval(sissy.metronome);
+          clearTimeout(sissy.metronome);
         }
       }
 
       function stop(){
         stopMetronome();
+        sissy.startTime = null;
         sissy.tickCount = null;
+        sissy.totalTickCount = null;
         sissy.gallery = null;
       }
 
