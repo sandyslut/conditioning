@@ -366,6 +366,8 @@
               if(args_autoplay >= 0){
                 setTimeout(start, args_autoplay*1000);
               }
+
+              updateStartHelp();
             }else{
               feedbackError(document.getElementById("folder-group"));
               document.getElementById("folder-help").innerHTML = "No files in folder.";
@@ -538,13 +540,15 @@
       }
 
       function updateStartHelp() {
-        var imagesPerSecond = sissy.beats / sissy.nextValue / 60;
-        if (sissy.limitValue == 0) {
-          var totalSeconds = sissy.urls.length / imagesPerSecond;
-        } else {
-          var totalSeconds = sissy.limitValue / imagesPerSecond;
-        }
-        sissy.startHelp.innerHTML='Estimated training time: ' + totalSeconds.toString().toHHMMSS();
+      	if(sissy.urls && sissy.limitValue){
+	      	var imagesPerSecond = sissy.beats / sissy.nextValue / 60;
+	        if (sissy.limitValue == 0) {
+	          var totalSeconds = sissy.urls.length / imagesPerSecond;
+	        } else {
+	          var totalSeconds = sissy.limitValue / imagesPerSecond;
+	        }
+	        sissy.startHelp.innerHTML='Estimated training time: ' + totalSeconds.toString().toHHMMSS();
+      	}
       }
 
       function clearStartHelp() {
