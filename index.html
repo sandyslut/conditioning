@@ -343,7 +343,7 @@
         sissy.urls = [];
 
         gapi.client.drive.files.list({
-          'q': "trashed=false and '" + folderId + "' in parents",
+          'q': "trashed=false and '" + folderId + "' in parents and mimeType != 'application/vnd.google-apps.folder' and mimeType != 'application/vnd.google-apps.drive-sdk'",
           'fields': "files(id, name)",
           'pageSize': 1000
         }).then(function(response){
