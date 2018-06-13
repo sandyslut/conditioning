@@ -6,6 +6,8 @@
     <meta name=viewport content="width=device-width, initial-scale=1">
 
     <meta name="google-site-verification" content="el0x0SQRusXYUoq4zn7ELpAXK5IKisS34JrdzM7VNp0" />
+    <!-- needed here because signin2.render has no clientId parameter -->
+    <meta name="google-signin-client_id" content="180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com">
 
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
 
@@ -68,6 +70,15 @@
       .policy{
         font-size: 75%;
       }
+      #authorize-button{
+        display: inline-block;
+/*        width: 240px;
+        height: 50px;
+        background-image: url("btn_google_signin_light_normal_web.png");*/
+      }
+/*      #authorize-button:hover{
+        background-image: url("btn_google_signin_light_focus_web.png");
+      }*/
     </style>
   </head>
   <body>
@@ -99,8 +110,8 @@
       </div>
       <div class="row">
         <div id="login-logout" class="col-xs-12">
-          <button id="authorize-button" class="btn btn-primary hidden">Login with Google Drive</button>
-          <button id="signout-button" class="btn btn-primary hidden">Sign Out</button>
+          <div id="authorize-button"></div>
+          <button id="signout-button" class="btn btn-primary hidden" onclick="handleSignoutClick()">Sign Out</button>
         </div>
       </div>
 
@@ -221,26 +232,35 @@
        *  On load, called to load the auth2 library and API client library.
        */
       function handleClientLoad(){
-        gapi.load("client:auth2", initClient);
-      }
+        // Load all used google javascript libs
+        gapi.load("client:auth2:signin2", function(){
 
-      /**
-       *  Initializes the API client library and sets up sign-in state
-       *  listeners.
-       */
-      function initClient(){
-        gapi.client.init({
-          clientId: CLIENT_ID,
-          discoveryDocs: DISCOVERY_DOCS,
-          scope: SCOPES
-        }).then(function (){
-          // Listen for sign-in state changes.
-          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+          // render google design guidlines compliant log in button
+          gapi.signin2.render("authorize-button", {
+            scope: SCOPES,
+            width: 200,
+            height: 40,
+            longtitle: true,
+            theme: "light",
+            onsuccess: function(){
 
-          // Handle the initial sign-in state.
-          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-          sissy.authorizeButton.onclick = handleAuthClick;
-          sissy.signoutButton.onclick = handleSignoutClick;
+              // Init the drive client after succesfull login
+              gapi.client.init({
+                // clientId & scope are now handled by signin2. If the are uncommented here this silently fails 
+                // clientId: CLIENT_ID,
+                // scope: SCOPES,
+                discoveryDocs: DISCOVERY_DOCS
+              }).then(function (){
+                // Listen for sign-in state changes.
+                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+
+                // Handle the initial sign-in state.
+                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
+              });
+            }
+          });
+
+          
         });
       }
 
@@ -264,16 +284,11 @@
       }
 
       /**
-       *  Sign in the user upon button click.
-       */
-      function handleAuthClick(event){
-        gapi.auth2.getAuthInstance().signIn();
-      }
-
-      /**
        *  Sign out the user upon button click.
        */
       function handleSignoutClick(event){
+        console.log("sign out called");
+        // does not work for some reason
         gapi.auth2.getAuthInstance().signOut();
       }
 
