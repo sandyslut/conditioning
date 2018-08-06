@@ -7,7 +7,7 @@
 
     <meta name="google-site-verification" content="el0x0SQRusXYUoq4zn7ELpAXK5IKisS34JrdzM7VNp0" />
     <!-- needed here because signin2.render has no clientId parameter -->
-    <meta name="google-signin-client_id" content="180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com">
+    <meta name="google-signin-client_id" content="173615888639-qml20f8qogh9cv97l73qld6rmkkk1dmv.apps.googleusercontent.com">
 
     <link rel="shortcut icon" href="favicon.ico" type="image/x-icon"/>
 
@@ -59,25 +59,36 @@
       a:hover{
         color: #d200e6 !important;
       }
+      #mantra-text {
+        position: fixed;
+        width: 100vw;
+        text-align: center;
+        z-index: 2;
+        font-size: 12vw;
+        left: 0;
+        bottom: 12%;
+        text-shadow: 0px 0px 5px rgb(0, 0, 0);
+        background-color: rgba(0, 0, 0, 0.6);
+      }
       #blueimp-gallery.blueimp-gallery > .play-pause{
         width: 40px;
         height: 40px;
         background-size: 80px 40px;
       }
       #blueimp-gallery.blueimp-gallery-playing > .play-pause{
-          background-position: -40px 0;
+        background-position: -40px 0;
       }
       .policy{
         font-size: 75%;
       }
       #authorize-button{
         display: inline-block;
-/*        width: 240px;
+        /*        width: 240px;
         height: 50px;
         background-image: url("btn_google_signin_light_normal_web.png");*/
       }
-/*      #authorize-button:hover{
-        background-image: url("btn_google_signin_light_focus_web.png");
+      /*      #authorize-button:hover{
+      background-image: url("btn_google_signin_light_focus_web.png");
       }*/
     </style>
   </head>
@@ -131,13 +142,13 @@
               </div>
               <div class="form-check col-xs-8 col-xs-offset-4 text-left">
                 <input id="shuffle-checkbox" type="checkbox" class="form-check-input">
-                <label class="form-check-label" for="shuffle-checkbox">Shuffle images</label>
+                <label class="form-check-label" for="shuffle-checkbox" checked>Shuffle images</label>
               </div>
             </div>
             <div id="beats-group" class="form-group has-feedback">
               <label class="control-label col-xs-4" or="beats-input">BPM:</label>
               <div class="col-xs-8">
-                <input class="form-control" id="beats-input" type="number">
+                <input class="form-control" id="beats-input" type="number" value="100">
                 <small id="beats-help" class="form-text text-muted">
                   Set to 0 to just show the gallery.
                 </small>
@@ -147,7 +158,7 @@
             <div id="next-group" class="form-group has-feedback">
               <label class="control-label col-xs-4" for="next-input">Next image:</label>
               <div class="col-xs-8">
-                <input class="form-control" id="next-input" type="number">
+                <input class="form-control" id="next-input" type="number" value="10">
                 <small id="next-help" class="form-text text-muted">
                   Set to 0 to disable the automatic slideshow.
                 </small>
@@ -164,6 +175,29 @@
                 <span class="hidden glyphicon form-control-feedback"></span>
               </div>
             </div>
+            <div id="mantra-group" class="form-group has-feedback">
+              <label class="control-label col-xs-4" for="limit-input">Mantra:</label>
+              <div class="col-xs-8">
+                <textarea class="form-control" id="mantra-input" type="text">This is me when feminized.</textarea>
+                <small id="mantra-help" class="form-text text-muted">
+                  Set blank to not use Mantras text		
+                </small>
+                <span class="hidden glyphicon form-control-feedback"></span>
+              </div>
+              
+            </div>
+            <div id="mantra-group" class="form-group has-success">
+              <label class="control-label col-xs-4" for="limit-input">Speed:</label>
+              <div class="col-xs-7">
+                <input type="range" min="1" max="20" value="10" class="slider" id="mantra-slider">
+                <small id="mantra-help" class="form-text text-muted">
+                  Set the speed of the mantra text
+                </small>
+              </div>
+              <div class="col-xs-1">
+                <span id="mantra-speed">10</span>
+              </div>
+            </div>
           </form>
           <button id="start-button" class="btn btn-primary">Start</button>
           <br><br>
@@ -178,489 +212,561 @@
       <a class="next">›</a>
       <a class="close">×</a>
       <a id="play-pause" class="play-pause"></a>
+      <span id="mantra-text"></span>
       <ol class="indicator"></ol>
     </div>
 
     <script type="text/javascript">
-      // Client ID and API key from the Developer Console
-      var CLIENT_ID = "180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com";
+// Client ID and API key from the Developer Console
+var CLIENT_ID = "173615888639-qml20f8qogh9cv97l73qld6rmkkk1dmv.apps.googleusercontent.com";
 
-      // Array of API discovery doc URLs for APIs
-      var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+// Array of API discovery doc URLs for APIs
+var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 
-      // Authorization scopes required by the API; multiple scopes can be
-      // included, separated by spaces.
-      var SCOPES = "https://www.googleapis.com/auth/drive.metadata.readonly";
+// Authorization scopes required by the API; multiple scopes can be
+// included, separated by spaces.
+var SCOPES = "https://www.googleapis.com/auth/drive.metadata.readonly";
 
-      // Namespace
-      var sissy = {};
+// Namespace
+var sissy = {};
 
-      function escapeHtml(str) {
-        var div = document.createElement("div");
-        div.appendChild(document.createTextNode(str));
-        return div.innerHTML;
-      };
+function escapeHtml(str) {
+  var div = document.createElement("div");
+  div.appendChild(document.createTextNode(str));
+  return div.innerHTML;
+};
 
-      function parseArgs() {
-        var args = [];
-        if (window.location.search != "") {
-          var tempArray = window.location.search.substring(1).split("&");
-          for (var i = 0; i < tempArray.length; i++) {
-            var temp = tempArray[i].split("=");
-            args[escapeHtml(unescape(temp[0]))] = escapeHtml(unescape(temp[1]));
-          }
-        }
-        return args;
-      };
-      // load args
-      sissy.args = parseArgs();
+function parseArgs() {
+  var args = [];
+  if (window.location.search != "") {
+    var tempArray = window.location.search.substring(1).split("&");
+    for (var i = 0; i < tempArray.length; i++) {
+      var temp = tempArray[i].split("=");
+      args[escapeHtml(unescape(temp[0]))] = escapeHtml(unescape(temp[1]));
+    }
+  }
+  return args;
+};
+// load args
+sissy.args = parseArgs();
 
-      // Load some nodes
-      sissy.authorizeButton = document.getElementById("authorize-button");
-      sissy.signoutButton = document.getElementById("signout-button");
-      sissy.settings = document.getElementById("settings");
-      sissy.folderSelect = document.getElementById("folder-select");
-      sissy.shuffleCheckbox = document.getElementById("shuffle-checkbox");
-      sissy.beatsInput = document.getElementById("beats-input");
-      sissy.nextInput = document.getElementById("next-input");
-      sissy.limitInput = document.getElementById("limit-input");
-      sissy.startButton = document.getElementById("start-button");
-      sissy.startHelp = document.getElementById("start-help");
-      sissy.tickSound = new Howl({src: ["tick.mp3"]});
+// Load some nodes
+sissy.authorizeButton = document.getElementById("authorize-button");
+sissy.signoutButton = document.getElementById("signout-button");
+sissy.settings = document.getElementById("settings");
+sissy.folderSelect = document.getElementById("folder-select");
+sissy.shuffleCheckbox = document.getElementById("shuffle-checkbox");
+sissy.beatsInput = document.getElementById("beats-input");
+sissy.nextInput = document.getElementById("next-input");
+sissy.limitInput = document.getElementById("limit-input");
+sissy.mantraInput = document.getElementById("mantra-input");
+sissy.mantraSlider = document.getElementById("mantra-slider");
+sissy.mantraSpeed = document.getElementById("mantra-speed");
+sissy.mantraSpeed.innerHTML = sissy.mantraSlider.value;
+sissy.startButton = document.getElementById("start-button");
+sissy.startHelp = document.getElementById("start-help");
+sissy.tickSound = new Howl({src: ["tick.mp3"]});
 
-      /**
+/**
        *  On load, called to load the auth2 library and API client library.
        */
-      function handleClientLoad(){
-        // Load all used google javascript libs
-        gapi.load("client:auth2:signin2", function(){
+function handleClientLoad(){
+  // Load all used google javascript libs
+  gapi.load("client:auth2:signin2", function(){
 
-          // render google design guidlines compliant log in button
-          gapi.signin2.render("authorize-button", {
-            scope: SCOPES,
-            width: 200,
-            height: 40,
-            longtitle: true,
-            theme: "light",
-            onsuccess: function(){
+    // render google design guidlines compliant log in button
+    gapi.signin2.render("authorize-button", {
+      scope: SCOPES,
+      width: 200,
+      height: 40,
+      longtitle: true,
+      theme: "light",
+      onsuccess: function(){
 
-              // Init the drive client after succesfull login
-              gapi.client.init({
-                // clientId & scope are now handled by signin2. If the are uncommented here this silently fails 
-                // clientId: CLIENT_ID,
-                // scope: SCOPES,
-                discoveryDocs: DISCOVERY_DOCS
-              }).then(function (){
-                // Listen for sign-in state changes.
-                gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
+        // Init the drive client after succesfull login
+        gapi.client.init({
+          // clientId & scope are now handled by signin2. If the are uncommented here this silently fails 
+          // clientId: CLIENT_ID,
+          // scope: SCOPES,
+          discoveryDocs: DISCOVERY_DOCS
+        }).then(function (){
+          // Listen for sign-in state changes.
+          gapi.auth2.getAuthInstance().isSignedIn.listen(updateSigninStatus);
 
-                // Handle the initial sign-in state.
-                updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
-              });
-            }
-          });
-
-          
+          // Handle the initial sign-in state.
+          updateSigninStatus(gapi.auth2.getAuthInstance().isSignedIn.get());
         });
       }
+    });
 
-      /**
+
+  });
+}
+
+/**
        *  Called when the signed in status changes, to update the UI
        *  appropriately. After a sign-in, the API is called.
        */
-      function updateSigninStatus(isSignedIn) {
-        if(isSignedIn){
-          sissy.authorizeButton.classList.add("hidden");
-          sissy.signoutButton.classList.remove("hidden");
-          sissy.settings.classList.remove("hidden");
+function updateSigninStatus(isSignedIn) {
+  if(isSignedIn){
+    sissy.authorizeButton.classList.add("hidden");
+    sissy.signoutButton.classList.remove("hidden");
+    sissy.settings.classList.remove("hidden");
 
-          // load folders to folder-select
-          listFolders();
-        }else{
-          sissy.authorizeButton.classList.remove("hidden");
-          sissy.signoutButton.classList.add("hidden");
-          sissy.settings.classList.add("hidden");
-        }
-      }
+    // load folders to folder-select
+    listFolders();
+  }else{
+    sissy.authorizeButton.classList.remove("hidden");
+    sissy.signoutButton.classList.add("hidden");
+    sissy.settings.classList.add("hidden");
+  }
+}
 
-      /**
+/**
        *  Sign out the user upon button click.
        */
-      function handleSignoutClick(event){
-        console.log("sign out called");
-        // does not work for some reason
-        gapi.auth2.getAuthInstance().signOut();
-      }
+function handleSignoutClick(event){
+  console.log("sign out called");
+  // does not work for some reason
+  gapi.auth2.getAuthInstance().signOut();
+}
 
-      /**
+/**
       * List all Google Drive folders in folder-select
       */
-      function listFolders(){
-        gapi.client.drive.files.list({
-          "q": "mimeType contains 'application/vnd.google-apps.folder' and trashed=false",
-          "fields": "files(id, name)"
-        }).then(function(response){
-          if(!response.error){
-            var folders = response.result.files;
-            var default_folder;
-            var default_folder_name = "orgasm diet";
-            if(sissy.args["folder"]){
-              default_folder_name = sissy.args["folder"];
-            }
-
-            if(folders && folders.length > 0){
-              for(var i=0; i < folders.length; i++){
-                
-                var option = document.createElement("option");
-                option.value = folders[i].id;
-                option.innerHTML = folders[i].name;
-                sissy.folderSelect.appendChild(option);
-
-
-                if(folders[i].name.toLowerCase() == default_folder_name.toLowerCase()){
-                  default_folder = folders[i];
-                }
-              }
-
-              if(default_folder){
-                sissy.folderSelect.value = default_folder.id;
-                listFiles(default_folder.id);
-              }
-
-              sissy.folderSelect.onchange = function(){
-                listFiles(sissy.folderSelect.value);
-              }
-            }else{
-              feedbackError(document.getElementById("folder-group"));
-              document.getElementById("folder-help").innerHTML = "Found no folders.";
-              var option = document.createElement("option");
-              option.innerHTML = "Found no folders";
-              sissy.folderSelect.appendChild(option);
-            }
-          }else{
-            feedbackError(document.getElementById("folder-group"));
-            document.getElementById("folder-help").innerHTML = "Failed to fetch folders. Error: " + response.error;
-            var option = document.createElement("option");
-            option.innerHTML = "Failed to fetch folders";
-            sissy.folderSelect.appendChild(option);
-            console.error(response.error);
-          }
-        }, function(){
-            feedbackError(document.getElementById("folder-group"));
-            document.getElementById("folder-help").innerHTML = "Failed to fetch folders.";
-        });
+function listFolders(){
+  gapi.client.drive.files.list({
+    "q": "mimeType contains 'application/vnd.google-apps.folder' and trashed=false",
+    "fields": "files(id, name)"
+  }).then(function(response){
+    if(!response.error){
+      var folders = response.result.files;
+      var default_folder;
+      var default_folder_name = "orgasm diet";
+      if(sissy.args["folder"]){
+        default_folder_name = sissy.args["folder"];
       }
 
-      /**
+      if(folders && folders.length > 0){
+        for(var i=0; i < folders.length; i++){
+
+          var option = document.createElement("option");
+          option.value = folders[i].id;
+          option.innerHTML = folders[i].name;
+          sissy.folderSelect.appendChild(option);
+
+
+          if(folders[i].name.toLowerCase() == default_folder_name.toLowerCase()){
+            default_folder = folders[i];
+          }
+        }
+
+        if(default_folder){
+          sissy.folderSelect.value = default_folder.id;
+          listFiles(default_folder.id);
+        }
+
+        sissy.folderSelect.onchange = function(){
+          listFiles(sissy.folderSelect.value);
+        }
+      }else{
+        feedbackError(document.getElementById("folder-group"));
+        document.getElementById("folder-help").innerHTML = "Found no folders.";
+        var option = document.createElement("option");
+        option.innerHTML = "Found no folders";
+        sissy.folderSelect.appendChild(option);
+      }
+    }else{
+      feedbackError(document.getElementById("folder-group"));
+      document.getElementById("folder-help").innerHTML = "Failed to fetch folders. Error: " + response.error;
+      var option = document.createElement("option");
+      option.innerHTML = "Failed to fetch folders";
+      sissy.folderSelect.appendChild(option);
+      console.error(response.error);
+    }
+  }, function(){
+    feedbackError(document.getElementById("folder-group"));
+    document.getElementById("folder-help").innerHTML = "Failed to fetch folders.";
+  });
+}
+
+/**
       * Load all files of a google drive folder and init blueimp gallery
       */
-      function listFiles(folderId){
-        sissy.urls = [];
+function listFiles(folderId){
+  sissy.urls = [];
 
-        gapi.client.drive.files.list({
-          'q': "trashed=false and '" + folderId + "' in parents and mimeType != 'application/vnd.google-apps.folder' and mimeType != 'application/vnd.google-apps.drive-sdk'",
-          'fields': "files(id, name)",
-          'pageSize': 1000
-        }).then(function(response){
-          if(!response.error){
-            var files = response.result.files;
-            if(files && files.length > 0){
+  gapi.client.drive.files.list({
+    'q': "trashed=false and '" + folderId + "' in parents and mimeType != 'application/vnd.google-apps.folder' and mimeType != 'application/vnd.google-apps.drive-sdk'",
+    'fields': "files(id, name)",
+    'pageSize': 1000
+  }).then(function(response){
+    if(!response.error){
+      var files = response.result.files;
+      if(files && files.length > 0){
 
-              for(var i=0; i < files.length; i++){
-                sissy.urls.push("https://lh3.google.com/d/" + files[i].id);
-              }
-
-              document.getElementById("folder-help").innerHTML = "Loaded " + sissy.urls.length + " images.";
-              
-              if(sissy.urls.length > 0){
-                feedbackOK(document.getElementById("folder-group"));
-              }
-
-              // start autoplay timeout after successful image loading
-              var args_autoplay = parseInt(sissy.args["autoplay"]);
-              if(args_autoplay >= 0){
-                setTimeout(start, args_autoplay*1000);
-              }
-
-              updateStartHelp();
-            }else{
-              feedbackError(document.getElementById("folder-group"));
-              document.getElementById("folder-help").innerHTML = "No files in folder.";
-            }
-          }else{
-            feedbackError(document.getElementById("folder-group"));
-            document.getElementById("folder-help").innerHTML = "Failed to fetch files. Error: " + response.error;
-            console.error(response.error);
-          }
-        }, function(){
-            feedbackError(document.getElementById("folder-group"));
-            document.getElementById("folder-help").innerHTML = "Failed to fetch files.";
-        });
-      }
-
-      function showOptions(){
-        document.getElementById("advancedOptions").classList.add("show");
-        document.getElementById("options-toggle").onclick = hideOptions;
-      }
-
-      function hideOptions(){
-        document.getElementById("advancedOptions").classList.remove("show");
-        document.getElementById("options-toggle").onclick = showOptions;
-      }
-
-      function clearFeedback(formGroup){
-        formGroup.classList.remove("has-error");
-        formGroup.classList.remove("has-success");
-
-        var icon = formGroup.getElementsByTagName("span")[0];
-        icon.classList.remove("glyphicon-remove");
-        icon.classList.remove("glyphicon-ok");
-        icon.classList.add("hidden");
-      }
-
-      function feedbackOK(formGroup){
-        formGroup.classList.remove("has-error");
-        formGroup.classList.add("has-success");
-
-        var icon = formGroup.getElementsByTagName("span")[0];
-        icon.classList.remove("glyphicon-remove");
-        icon.classList.add("glyphicon-ok");
-        icon.classList.remove("hidden");
-      }
-
-      function feedbackError(formGroup){
-        formGroup.classList.remove("has-success");
-        formGroup.classList.add("has-error");
-
-        var icon = formGroup.getElementsByTagName("span")[0];
-        icon.classList.remove("glyphicon-ok");
-        icon.classList.add("glyphicon-remove");
-        icon.classList.remove("hidden");
-      }
-
-      function shuffle(array) {
-          var j, x, i;
-          for (i = array.length - 1; i > 0; i--) {
-              j = Math.floor(Math.random() * (i + 1));
-              x = array[i];
-              array[i] = array[j];
-              array[j] = x;
-          }
-      }
-
-      function tick(){
-        sissy.playing = true;
-
-        if(sissy.beats > 0){
-          sissy.tickSound.play();
+        for(var i=0; i < files.length; i++){
+          sissy.urls.push("https://lh3.google.com/d/" + files[i].id);
         }
 
-        if(sissy.nextValue > 0 && sissy.tickCount >= sissy.nextValue){
-          sissy.tickCount = 0;
-          sissy.gallery.next();
-        }
-        sissy.tickCount += 1;
-        sissy.totalTickCount += 1;
+        document.getElementById("folder-help").innerHTML = "Loaded " + sissy.urls.length + " images.";
 
-        var diff = (new Date().getTime() - sissy.startTime) - (sissy.totalTickCount * 1000/(sissy.beats/60));
-        sissy.metronome = window.setTimeout(tick, 1000 / (sissy.beats / 60) - diff);
+        if(sissy.urls.length > 0){
+          feedbackOK(document.getElementById("folder-group"));
+        }
+
+        // start autoplay timeout after successful image loading
+        var args_autoplay = parseInt(sissy.args["autoplay"]);
+        if(args_autoplay >= 0){
+          setTimeout(start, args_autoplay*1000);
+        }
+
+        updateStartHelp();
+      }else{
+        feedbackError(document.getElementById("folder-group"));
+        document.getElementById("folder-help").innerHTML = "No files in folder.";
       }
+    }else{
+      feedbackError(document.getElementById("folder-group"));
+      document.getElementById("folder-help").innerHTML = "Failed to fetch files. Error: " + response.error;
+      console.error(response.error);
+    }
+  }, function(){
+    feedbackError(document.getElementById("folder-group"));
+    document.getElementById("folder-help").innerHTML = "Failed to fetch files.";
+  });
+}
 
-      function toggleSlideShow(event){
-        //always pasue blueimp-gallery intern slideshow
-        sissy.gallery.pause();
+function showOptions(){
+  document.getElementById("advancedOptions").classList.add("show");
+  document.getElementById("options-toggle").onclick = hideOptions;
+}
 
-        if(sissy.playing){
-          stopMetronome();
-          document.getElementById("blueimp-gallery").classList.remove("blueimp-gallery-playing");
-          sissy.playing = false;
-        }else{
-          start();
+function hideOptions(){
+  document.getElementById("advancedOptions").classList.remove("show");
+  document.getElementById("options-toggle").onclick = showOptions;
+}
+
+function clearFeedback(formGroup){
+  formGroup.classList.remove("has-error");
+  formGroup.classList.remove("has-success");
+
+  var icon = formGroup.getElementsByTagName("span")[0];
+  icon.classList.remove("glyphicon-remove");
+  icon.classList.remove("glyphicon-ok");
+  icon.classList.add("hidden");
+}
+
+function feedbackOK(formGroup){
+  formGroup.classList.remove("has-error");
+  formGroup.classList.add("has-success");
+
+  var icon = formGroup.getElementsByTagName("span")[0];
+  icon.classList.remove("glyphicon-remove");
+  icon.classList.add("glyphicon-ok");
+  icon.classList.remove("hidden");
+}
+
+function feedbackError(formGroup){
+  formGroup.classList.remove("has-success");
+  formGroup.classList.add("has-error");
+
+  var icon = formGroup.getElementsByTagName("span")[0];
+  icon.classList.remove("glyphicon-ok");
+  icon.classList.add("glyphicon-remove");
+  icon.classList.remove("hidden");
+}
+
+function shuffle(array) {
+  var j, x, i;
+  for (i = array.length - 1; i > 0; i--) {
+    j = Math.floor(Math.random() * (i + 1));
+    x = array[i];
+    array[i] = array[j];
+    array[j] = x;
+  }
+}
+
+function tick(){
+  sissy.playing = true;
+
+  if(sissy.beats > 0){
+    sissy.tickSound.play();
+  }
+
+  if(sissy.nextValue > 0 && sissy.tickCount >= sissy.nextValue){
+    sissy.tickCount = 0;
+    sissy.gallery.next();
+  }
+  sissy.tickCount += 1;
+  sissy.totalTickCount += 1;
+
+  var diff = (new Date().getTime() - sissy.startTime) - (sissy.totalTickCount * 1000/(sissy.beats/60));
+  sissy.metronome = window.setTimeout(tick, 1000 / (sissy.beats / 60) - diff);
+}
+
+function mantra(){
+  var $mantraHTML = document.getElementById('mantra-text')
+  var mantraText = sissy.mantraText
+  var totalTimeInMilliseconds = calcReadTimeInMillisecond(mantraText.length)
+  var currentTime = 0
+  
+  // Range from to 30 to 60
+  const timeBuffer = 630 - sissy.mantraSlider.value*30 
+
+  // Now lets add a 400ms buffer for each words
+  var mantraArray = mantraText.split(" ")
+  totalTimeInMilliseconds += timeBuffer*mantraArray.length
+
+  mantraArray.forEach( function (word) {
+    var t = calcReadTimeInMillisecond( word.length ) + timeBuffer
+    setTimeout(function() {
+      $mantraHTML.innerHTML = word
+    }, t+currentTime)
+    currentTime += t    
+  })
+
+  sissy.mantra = window.setTimeout(mantra, totalTimeInMilliseconds)
+}
+
+function calcReadTimeInMillisecond( x ) {
+  // Average Reader speed is 200 word per minute
+  // => 3 Words per second
+  // Average Word length is 6.5
+  // => 20 letters per second
+  const avgSpeed = 20
+  return ~~(x / avgSpeed * 1000)
+}
+
+function toggleSlideShow(event){
+  //always pasue blueimp-gallery intern slideshow
+  sissy.gallery.pause();
+
+  if(sissy.playing){
+    stopMetronome();
+    clearTimeout( sissy.mantra )
+    document.getElementById("blueimp-gallery").classList.remove("blueimp-gallery-playing");
+    sissy.playing = false;
+  }else{
+    start();
+  }
+
+  // prevent the gallery event listeners from being called
+  event.stopPropagation();
+}
+
+function start(event){
+  if(!sissy.urls || sissy.urls.length <= 0){
+    listFiles(sissy.folderSelect.value);
+
+    // if still no urls do not start
+    if(!sissy.urls || sissy.urls.length <= 0){
+      return
+    }
+  }
+  if(!sissy.beats){
+    feedbackError(document.getElementById("beats-group"));
+    return
+  }
+  if(sissy.beats != 0 && !sissy.nextValue){
+    feedbackError(document.getElementById("next-group"));
+    return
+  }
+  if (!sissy.limitValue){
+    feedbackError(document.getElementById("limit-group"));
+    return
+  }
+  if (!sissy.mantraText){
+    feedbackError(document.getElementById("mantra-group"));
+    return
+  }
+  if(!sissy.tickCount){
+    sissy.tickCount = 1;
+  }
+  sissy.totalTickCount = 0;
+
+  if(!sissy.gallery){
+    var urls = sissy.urls.slice();
+    if(sissy.shuffleCheckbox.checked){
+      shuffle(urls);
+    }
+
+    if(sissy.limitValue > 0) {
+      urls = urls.slice(0,sissy.limitValue);
+    }
+
+    sissy.gallery = blueimp.Gallery(urls, {onclose:stop, preloadRange: 4});
+
+    if(sissy.beats > 0){
+      // custom event listeners have to be added after gallery ones, so they will be called first
+      document.getElementById("play-pause").addEventListener("click", toggleSlideShow);
+      document.body.addEventListener("keydown", function(event){
+        var key = event.which || event.keyCode;
+        if(key == 32){ // Space
+          toggleSlideShow(event);
         }
+      });
+    }
+  }
 
-        // prevent the gallery event listeners from being called
-        event.stopPropagation();
-      }
+  if(sissy.mantraText != undefined) {
+    sissy.mantra = setTimeout(mantra, 1)
+  }
 
-      function start(event){
-        if(!sissy.urls || sissy.urls.length <= 0){
-          listFiles(sissy.folderSelect.value);
+  if(sissy.beats > 0) {
+    sissy.startTime = new Date().getTime();
+    sissy.metronome = setTimeout(tick, 1000/(sissy.beats/60));
+    document.getElementById("blueimp-gallery").classList.add("blueimp-gallery-playing");
+    sissy.playing = true;
+  }
+}
 
-          // if still no urls do not start
-          if(!sissy.urls || sissy.urls.length <= 0){
-             return
-          }
-        }
-        if(!sissy.beats){
-          feedbackError(document.getElementById("beats-group"));
-          return
-        }
-        if(sissy.beats != 0 && !sissy.nextValue){
-          feedbackError(document.getElementById("next-group"));
-          return
-        }
-        if (!sissy.limitValue){
-          feedbackError(document.getElementById("limit-group"));
-          return
-        }
-        if(!sissy.tickCount){
-          sissy.tickCount = 1;
-        }
-        sissy.totalTickCount = 0;
+function stopMetronome(){
+  if(sissy.metronome){
+    clearTimeout(sissy.metronome);
+  }
+}
 
-        if(!sissy.gallery){
-          var urls = sissy.urls.slice();
-          if(sissy.shuffleCheckbox.checked){
-            shuffle(urls);
-          }
+function stop(){
+  stopMetronome();
+  clearTimeout( sissy.mantra )
+  sissy.startTime = null;
+  sissy.tickCount = null;
+  sissy.totalTickCount = null;
+  sissy.gallery = null;
+}
 
-          if(sissy.limitValue > 0) {
-            urls = urls.slice(0,sissy.limitValue);
-          }
+function updateStartHelp() {
+  if(sissy.urls && sissy.limitValue){
+    var imagesPerSecond = sissy.beats / sissy.nextValue / 60;
+    if (sissy.limitValue == 0) {
+      var totalSeconds = sissy.urls.length / imagesPerSecond;
+    } else {
+      var totalSeconds = sissy.limitValue / imagesPerSecond;
+    }
+    sissy.startHelp.innerHTML='Estimated training time: ' + totalSeconds.toString().toHHMMSS();
+  }
+}
 
-          sissy.gallery = blueimp.Gallery(urls, {onclose:stop, preloadRange: 4});
+function clearStartHelp() {
+  sissy.startHelp.innerHTML='';
+}
 
-          if(sissy.beats > 0){
-            // custom event listeners have to be added after gallery ones, so they will be called first
-            document.getElementById("play-pause").addEventListener("click", toggleSlideShow);
-            document.body.addEventListener("keydown", function(event){
-              var key = event.which || event.keyCode;
-              if(key == 32){ // Space
-                toggleSlideShow(event);
-              }
-            });
-          }
-        }
-        
-        if(sissy.beats > 0) {
-          sissy.startTime = new Date().getTime();
-          sissy.metronome = setTimeout(tick, 1000/(sissy.beats/60));
-          document.getElementById("blueimp-gallery").classList.add("blueimp-gallery-playing");
-          sissy.playing = true;
-        }
-      }
+String.prototype.toHHMMSS = function () {
+  var sec_num = parseInt(this, 10); // don't forget the second param
+  var hours   = Math.floor(sec_num / 3600);
+  var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
+  var seconds = sec_num - (hours * 3600) - (minutes * 60);
 
-      function stopMetronome(){
-        if(sissy.metronome){
-          clearTimeout(sissy.metronome);
-        }
-      }
+  if (hours   < 10) {hours   = "0"+hours;}
+  if (minutes < 10) {minutes = "0"+minutes;}
+  if (seconds < 10) {seconds = "0"+seconds;}
+  return hours+':'+minutes+':'+seconds;
+};
 
-      function stop(){
-        stopMetronome();
-        sissy.startTime = null;
-        sissy.tickCount = null;
-        sissy.totalTickCount = null;
-        sissy.gallery = null;
-      }
+sissy.startButton.onclick = start;
 
-      function updateStartHelp() {
-      	if(sissy.urls && sissy.limitValue){
-	      	var imagesPerSecond = sissy.beats / sissy.nextValue / 60;
-	        if (sissy.limitValue == 0) {
-	          var totalSeconds = sissy.urls.length / imagesPerSecond;
-	        } else {
-	          var totalSeconds = sissy.limitValue / imagesPerSecond;
-	        }
-	        sissy.startHelp.innerHTML='Estimated training time: ' + totalSeconds.toString().toHHMMSS();
-      	}
-      }
+sissy.beatsInput.onchange = function(event){
+  sissy.beats = sissy.beatsInput.value;
+  if(sissy.beats >= 0){
+    feedbackOK(document.getElementById("beats-group"));
+  }else{
+    sissy.beats = undefined;
+    feedbackError(document.getElementById("beats-group"));
+  }
 
-      function clearStartHelp() {
-        sissy.startHelp.innerHTML='';
-      }
+  if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+    updateStartHelp();
+  } else {
+    clearStartHelp();
+  }
+};
+sissy.nextInput.onchange = function(event){
+  sissy.nextValue = sissy.nextInput.value;
+  if(sissy.nextValue >= 0){
+    feedbackOK(document.getElementById("next-group"));
+  }else{
+    sissy.nextValue = undefined;
+    feedbackError(document.getElementById("next-group"));
+  }
 
-      String.prototype.toHHMMSS = function () {
-        var sec_num = parseInt(this, 10); // don't forget the second param
-        var hours   = Math.floor(sec_num / 3600);
-        var minutes = Math.floor((sec_num - (hours * 3600)) / 60);
-        var seconds = sec_num - (hours * 3600) - (minutes * 60);
+  if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+    updateStartHelp();
+  } else {
+    clearStartHelp();
+  }
+};
+sissy.limitInput.onchange = function(event){
+  sissy.limitValue = sissy.limitInput.value;
+  if(sissy.limitValue >= 0){
+    feedbackOK(document.getElementById("limit-group"));
+  }else{
+    sissy.limitValue = undefined;
+    feedbackError(document.getElementById("limit-group"));
+  }
 
-        if (hours   < 10) {hours   = "0"+hours;}
-        if (minutes < 10) {minutes = "0"+minutes;}
-        if (seconds < 10) {seconds = "0"+seconds;}
-        return hours+':'+minutes+':'+seconds;
-      };
+  if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+    updateStartHelp();
+  } else {
+    clearStartHelp();
+  }
+};
+sissy.mantraInput.onchange = function(event){
+  sissy.mantraText = sissy.mantraInput.textContent;
+  if(sissy.mantraText.length >= 0){
+    feedbackOK(document.getElementById("mantra-group"));
+  }else{
+    sissy.mantraText = undefined;
+    feedbackError(document.getElementById("mantra-group"));
+  }
 
-      sissy.startButton.onclick = start;
+  if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
+    updateStartHelp();
+  } else {
+    clearStartHelp();
+  }
+};
+sissy.mantraSlider.oninput = function(event) {
+  sissy.mantraSpeed.innerHTML = sissy.mantraSlider.value;  
+};
 
-      sissy.beatsInput.onchange = function(event){
-        sissy.beats = sissy.beatsInput.value;
-        if(sissy.beats >= 0){
-          feedbackOK(document.getElementById("beats-group"));
-        }else{
-          sissy.beats = undefined;
-          feedbackError(document.getElementById("beats-group"));
-        }
+sissy.beatsInput.onchange()
+sissy.nextInput.onchange()
+sissy.limitInput.onchange()
+sissy.mantraInput.onchange()
 
-        if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
-          updateStartHelp();
-        } else {
-          clearStartHelp();
-        }
-      };
-      sissy.nextInput.onchange = function(event){
-        sissy.nextValue = sissy.nextInput.value;
-        if(sissy.nextValue >= 0){
-          feedbackOK(document.getElementById("next-group"));
-        }else{
-          sissy.nextValue = undefined;
-          feedbackError(document.getElementById("next-group"));
-        }
 
-        if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
-            updateStartHelp();
-        } else {
-            clearStartHelp();
-        }
-      };
-      sissy.limitInput.onchange = function(event){
-        sissy.limitValue = sissy.limitInput.value;
-        if(sissy.limitValue >= 0){
-          feedbackOK(document.getElementById("limit-group"));
-        }else{
-          sissy.limitValue = undefined;
-          feedbackError(document.getElementById("limit-group"));
-        }
+// set defaults
+sissy.limitInput.value = 0;
+sissy.limitInput.dispatchEvent(new Event("change"));
 
-        if (sissy.beats >= 0 && sissy.nextValue >= 0 && sissy.limitValue >=0 ) {
-            updateStartHelp();
-        } else {
-            clearStartHelp();
-        }
-      };
-
-      // set defaults
-      sissy.limitInput.value = 0;
-      sissy.limitInput.dispatchEvent(new Event("change"));
-
-      // set options if args are present
-      var args_shuffle = parseInt(sissy.args["shuffle"]);
-      if(args_shuffle){
-        if(args_shuffle == 1){
-          sissy.shuffleCheckbox.checked = true;
-        }
-      }
-      var args_beats = parseInt(sissy.args["bpm"]);
-      if(args_beats){
-        sissy.beatsInput.value = args_beats;
-        sissy.beatsInput.dispatchEvent(new Event("change"));
-      }
-      var args_next = parseInt(sissy.args["next"]);
-      if(args_next){
-        sissy.nextInput.value = args_next;
-        sissy.nextInput.dispatchEvent(new Event("change"));
-      }
-      var args_limit = parseInt(sissy.args["limit"]);
-      if(args_limit){
-        sissy.limitInput.value = args_limit;
-        sissy.limitInput.dispatchEvent(new Event("change"));
-      }
+// set options if args are present
+var args_shuffle = parseInt(sissy.args["shuffle"]);
+if(args_shuffle){
+  if(args_shuffle == 1){
+    sissy.shuffleCheckbox.checked = true;
+  }
+}
+var args_beats = parseInt(sissy.args["bpm"]);
+if(args_beats){
+  sissy.beatsInput.value = args_beats;
+  sissy.beatsInput.dispatchEvent(new Event("change"));
+}
+var args_next = parseInt(sissy.args["next"]);
+if(args_next){
+  sissy.nextInput.value = args_next;
+  sissy.nextInput.dispatchEvent(new Event("change"));
+}
+var args_limit = parseInt(sissy.args["limit"]);
+if(args_limit){
+  sissy.limitInput.value = args_limit;
+  sissy.limitInput.dispatchEvent(new Event("change"));
+}
     </script>
 
     <script async defer src="https://apis.google.com/js/api.js"
-      onload="this.onload=function(){};handleClientLoad()"
-      onreadystatechange="if (this.readyState === 'complete') this.onload()">
+            onload="this.onload=function(){};handleClientLoad()"
+            onreadystatechange="if (this.readyState === 'complete') this.onload()">
     </script>
   </body>
 </html>
