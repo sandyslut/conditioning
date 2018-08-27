@@ -8,8 +8,8 @@
 
   <meta name="google-site-verification" content="el0x0SQRusXYUoq4zn7ELpAXK5IKisS34JrdzM7VNp0" />
   <!-- needed here because signin2.render has no clientId parameter -->
-  <!--    <meta name="google-signin-client_id" content="173615888639-qml20f8qogh9cv97l73qld6rmkkk1dmv.apps.googleusercontent.com">-->
-  <meta name="google-signin-client_id" content="180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com">
+  <meta name="google-signin-client_id" content="173615888639-qml20f8qogh9cv97l73qld6rmkkk1dmv.apps.googleusercontent.com">
+<!--  <meta name="google-signin-client_id" content="180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com">-->
 
   <link rel="shortcut icon" href="favicon.ico" type="image/x-icon" />
 
@@ -76,11 +76,10 @@
       width: 100vw;
       text-align: center;
       z-index: 2;
-      font-size: 12vw;
+      font-size: 7vw;
       left: 0;
-      bottom: 12%;
-      text-shadow: 0px 0px 5px rgb(0, 0, 0);
-      background-color: rgba(0, 0, 0, 0.6);
+      bottom: 20px;
+      text-shadow: 5px 5px 10px rgb(0, 0, 0);
     }
 
     #blueimp-gallery.blueimp-gallery>.play-pause {
@@ -198,7 +197,7 @@
           <div id="mantra-group" class="form-group has-feedback">
             <label class="control-label col-xs-4" for="limit-input">Mantra:</label>
             <div class="col-xs-8">
-              <textarea class="form-control" id="mantra-input" type="text">This is me when feminized.</textarea>
+              <textarea class="form-control" id="mantra-input" type="text"></textarea>
               <small id="mantra-help" class="form-text text-muted">
                   Set blank to not use Mantras text		
                 </small>
@@ -238,8 +237,8 @@
 
   <script type="text/javascript">
     // Client ID and API key from the Developer Console
-    //var CLIENT_ID = "173615888639-qml20f8qogh9cv97l73qld6rmkkk1dmv.apps.googleusercontent.com";
-    var CLIENT_ID = "180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com";
+    var CLIENT_ID = "173615888639-qml20f8qogh9cv97l73qld6rmkkk1dmv.apps.googleusercontent.com";
+    //var CLIENT_ID = "180558660158-79v5qhc91h84hotb3526l7t3co9n7qu7.apps.googleusercontent.com";
 
     // Array of API discovery doc URLs for APIs
     var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
@@ -599,10 +598,6 @@
         feedbackError(document.getElementById("limit-group"));
         return
       }
-      if (!sissy.mantraText) {
-        feedbackError(document.getElementById("mantra-group"));
-        return
-      }
       if (!sissy.tickCount) {
         sissy.tickCount = 1;
       }
@@ -635,7 +630,7 @@
         }
       }
 
-      if (sissy.mantraText != undefined) {
+      if (sissy.mantraText.length != 0) {
         sissy.mantra = setTimeout(mantra, 1)
       }
 
@@ -744,7 +739,8 @@
       }
     };
     sissy.mantraInput.onchange = function(event) {
-      sissy.mantraText = sissy.mantraInput.textContent;
+      sissy.mantraText = document.getElementById("mantra-input").value;
+      console.log(sissy.mantraText);
       if (sissy.mantraText.length >= 0) {
         feedbackOK(document.getElementById("mantra-group"));
       } else {
