@@ -102,12 +102,13 @@
         <ul class="text-left">
           <li><b>folder</b> - Folder name that should be selected</li>
           <li><b>shuffle</b> - Set to 1 to activate image shuffling
+          <li><b>autofit</b> - Fits the image to the screen height
           <li><b>bpm</b> - Beats per minute</li>
           <li><b>next</b> - After how many beats the next image appears</li>
           <li><b>limit</b> - Limit the number of images</li>
           <li><b>autoplay</b> - After how many seconds the slideshow automatically starts<br><small>On mobile devices there will probably be no sound, because it requires a user interaction.</small></li>
         </ul>
-        <p>For example like this: <a href="?bpm=100&next=5&shuffle=1">/?bpm=100&amp;next=5&amp;shuffle=1</a></p>
+        <p>For example like this: <a href="?bpm=100&next=5&shuffle=1&autofit=true">/?bpm=100&amp;next=5&amp;shuffle=1&amp;autofit=true</a></p>
       </div>
       <div class="row">
         <div id="login-logout" class="col-xs-12">
@@ -133,6 +134,10 @@
               <div class="form-check col-xs-8 col-xs-offset-4 text-left">
                 <input id="shuffle-checkbox" type="checkbox" class="form-check-input">
                 <label class="form-check-label" for="shuffle-checkbox">Shuffle images</label>
+              </div>
+              <div class="form-check col-xs-8 col-xs-offset-4 text-left">
+                <input id="autofit-checkbox" type="checkbox" class="form-check-input">
+                <label class="form-check-label" for="autofit-checkbox">Autofit images</label>
               </div>
             </div>
             <div id="beats-group" class="form-group has-feedback">
@@ -222,6 +227,7 @@
       sissy.settings = document.getElementById("settings");
       sissy.folderSelect = document.getElementById("folder-select");
       sissy.shuffleCheckbox = document.getElementById("shuffle-checkbox");
+      sissy.autofitCheckbox = document.getElementById("autofit-checkbox");
       sissy.beatsInput = document.getElementById("beats-input");
       sissy.nextInput = document.getElementById("next-input");
       sissy.limitInput = document.getElementById("limit-input");
@@ -449,6 +455,12 @@
           }
       }
 
+      function autofit() {
+        var sheet = document.createElement('style')
+        sheet.innerHTML = "img.slide-content {max-width: 100% !important; max-height: 100% !important; object-fit: contain !important; width: 100% !important; height: 100% !important;}";
+        document.body.appendChild(sheet);
+      }
+
       function tick(){
         sissy.playing = true;
 
@@ -513,6 +525,10 @@
           var urls = sissy.urls.slice();
           if(sissy.shuffleCheckbox.checked){
             shuffle(urls);
+          }
+
+          if(sissy.autofitCheckbox.checked){
+            autofit();
           }
 
           if(sissy.limitValue > 0) {
@@ -640,6 +656,13 @@
       if(args_shuffle){
         if(args_shuffle == 1){
           sissy.shuffleCheckbox.checked = true;
+        }
+      }
+      var autofit_args = sissy.args["autofit"] || "";
+      var args_autofit = autofit_args.toLowerCase() === "true";
+      if(args_autofit){
+        if(args_autofit == 1){
+          sissy.autofitCheckbox.checked = true;
         }
       }
       var args_beats = parseInt(sissy.args["bpm"]);
